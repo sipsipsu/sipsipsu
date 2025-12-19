@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sonsuz Aşkımız ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root { --primary: #ff4d6d; --secondary: #ff85a1; --dark: #0f0c29; --envelope-color: #ff99aa; --envelope-dark: #ff85a1; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; position: fixed; touch-action: manipulation; }
+        body { 
+            display: flex; align-items: center; justify-content: center; 
+            background: radial-gradient(circle at center, #1a1a2e 0%, #07071e 100%); 
+            font-family: 'Montserrat', sans-serif; color: white; text-align: center;
+            transition: filter 1s ease; /* Kararma efekti için eklendi */
+        }
+
+        /* DEKORLAR */
+        .decor-item { position: absolute; font-size: 2.5rem; pointer-events: none; z-index: 5; opacity: 0.6; }
+        .top-left { top: 15px; left: 15px; transform: rotate(-15deg); }
+        .top-right { top: 15px; right: 15px; transform: rotate(15deg); }
+        .bottom-left { bottom: 15px; left: 15px; }
+        .bottom-right { bottom: 15px; right: 15px; }
+
+        /* GİRİŞ EKRANI */
+        #login-screen { position: fixed; inset: 0; background: var(--dark); display: flex; align-items: center; justify-content: center; z-index: 1000; transition: 1s; }
+        .login-card { background: rgba(255,255,255,0.08); padding: 30px 25px; border-radius: 30px; backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); width: 85%; max-width: 320px; display: flex; flex-direction: column; align-items: center; }
+        .login-card h2 { font-family: 'Dancing Script'; font-size: 2rem; color: var(--primary); margin: 0 0 20px 0; }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: none; text-align: center; outline: none; font-size: 1rem; -webkit-appearance: none; }
+        .login-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+
+        /* ANA PANEL */
+        .container { display: none; width: 92%; max-width: 400px; background: rgba(255,255,255,0.06); backdrop-filter: blur(20px); padding: 25px 15px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.4); z-index: 10; max-height: 95vh; overflow-y: auto; }
+        .photo-frame { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--primary); margin: 0 auto 10px; background: url('https://via.placeholder.com/100') center/cover; cursor: pointer; }
+        .timer { font-size: 1.5rem; font-weight: 700; color: var(--secondary); margin: 5px 0; letter-spacing: -0.5px; }
+        .reasons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 15px 0; }
+        .card { background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 10px; font-size: 0.7rem; cursor: pointer; }
+
+        /* ZARF SİSTEMİ */
+        #surpriz-bolumu { display: none; margin-top: 15px; animation: slideUp 1s forwards; }
+        .envelope-wrapper { position: relative; width: 240px; height: 140px; margin: 30px auto 0; perspective: 1000px; }
+        .envelope-base { position: absolute; width: 100%; height: 100%; background: var(--envelope-color); border-radius: 0 0 10px 10px; z-index: 2; overflow: hidden; }
+        .envelope-base::after { content:''; position: absolute; bottom:0; left:0; width:0; height:0; border-left:120px solid transparent; border-right:120px solid transparent; border-bottom:70px solid rgba(255,255,255,0.2); }
+        .flap { position: absolute; top: 0; left: 0; width: 0; height: 0; border-left: 120px solid transparent; border-right: 120px solid transparent; border-top: 80px solid var(--envelope-dark); transform-origin: top; transition: 0.6s; z-index: 4; }
+        .seal { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 30px; height: 30px; background: var(--primary); clip-path: path('M15 27c0 0-12-7.5-12-15 0-4.5 3-7.5 7.5-7.5 2.25 0 3.75 1.5 4.5 1.5s2.25-1.5 4.5-1.5c4.5 0 7.5 3 7.5 7.5 0 7.5-12 15-12 15z'); z-index: 5; }
+        .letter { position: absolute; bottom: 5px; left: 5px; width: 230px; background: white; border-radius: 5px; padding: 15px; color: #333; font-family: 'Dancing Script'; font-size: 1.1rem; opacity: 0; transition: 0.8s; z-index: 3; text-align: center; }
+        .envelope-wrapper.open .flap { transform: rotateX(180deg); z-index: 1; }
+        .envelope-wrapper.open .letter { transform: translateY(-120px); opacity: 1; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); }
+
+        /* OYUN */
+        .game-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 15px 0; }
+        .cell { aspect-ratio: 1; background: rgba(255,255,255,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; overflow: hidden; }
+        .cell img { width: 100%; height: 100%; object-fit: cover; }
+        .cell.opened { background: white; color: var(--dark); font-weight: bold; }
+        .cell.fail { background: var(--primary) !important; }
+        .game-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 0.9rem; margin-top: 10px; }
+
+        /* MODAL */
+        #custom-modal { display: none; position: fixed; inset: 0; background: rgba(7, 7, 30, 0.85); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(12px); padding: 20px; }
+        .modal-content { background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 77, 109, 0.4); padding: 30px 20px; border-radius: 25px; width: 100%; max-width: 300px; }
+
+        .hidden { display: none !important; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .snowflake { position: absolute; top: -10px; color: white; user-select: none; z-index: 1; animation: fall linear infinite; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(105vh) rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="decor-item top-left">🎄</div>
+    <div class="decor-item top-right">🎁</div>
+    <div class="decor-item bottom-left">☃️</div>
+    <div class="decor-item bottom-right">🎅</div>
+
+    <div id="login-screen">
+        <div class="login-card">
+            <h2>Aşkımızın Kapısı</h2>
+            <input type="password" id="pw" placeholder="Özel günümüz?" inputmode="text">
+            <button class="login-btn" onclick="login()">Giriş Yap ❤️</button>
+        </div>
+    </div>
+
+    <div id="custom-modal" onclick="this.style.display='none'">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <p id="modal-text" style="font-family:'Dancing Script'; font-size:1.6rem; color: var(--secondary); margin-bottom: 20px;"></p>
+            <button class="game-btn" style="width: 100%;" onclick="document.getElementById('custom-modal').style.display='none'">Tamam ❤️</button>
+        </div>
+    </div>
+
+    <div class="container" id="main">
+        <div id="ana-icerik">
+            <div class="photo-frame" id="easter-photo" onclick="triggerPhotoEgg()"></div>
+            <h1 id="long-press-title" style="font-family: 'Dancing Script'; font-size: 2.2rem; color: var(--primary); margin: 0; user-select: none;">İyi ki Varsın</h1>
+            <p style="font-size: 0.55rem; letter-spacing: 2px; margin-top: 10px; opacity: 0.8;">BİRLİKTE GEÇEN ÖMRÜMÜZ</p>
+            <div id="b-sayac" class="timer">...</div>
+
+            <div class="reasons">
+                <div class="card" onclick="openModal('Gülüşün her şeyi güzelleştiriyor ✨')">Gülüşün ✨</div>
+                <div class="card" onclick="openModal('Sesin en huzurlu limanım 🎶')">Sesin 🎶</div>
+                <div class="card" onclick="openModal('Dünyanın en güzel kalbi sende ❤️')">Kalbin ❤️</div>
+            </div>
+
+            <button class="game-btn" onclick="oyunuAc()">🎮 Aşk Tarlası Oyna</button>
+            <hr style="opacity: 0.1; margin: 20px 0;">
+
+            <div id="y-alan">
+                <h3 style="font-family: 'Dancing Script'; color: var(--primary); font-size: 1.6rem; margin: 0;">Sürpriz Mektuba Kalan</h3>
+                <div id="y-sayac" class="timer">...</div>
+            </div>
+
+            <div id="surpriz-bolumu">
+                <div class="envelope-wrapper" onclick="this.classList.toggle('open')">
+                    <div class="flap"></div>
+                    <div class="letter">
+                        <strong>Canım Sevgilim,</strong><br><br>
+                        Beklediğimiz o an geldi! Seninle her yıl, her gün, her saniye çok değerli. İyi ki hayatımdasın. Seni çok seviyorum! ❤️
+                    </div>
+                    <div class="envelope-base"></div>
+                    <div class="seal"></div>
+                </div>
+                <p style="font-size:0.7rem; color:var(--secondary); margin-top:10px;">Mektuba dokunup açabilirsin ✨</p>
+            </div>
+        </div>
+
+        <div id="oyun-alani" class="hidden">
+            <h2 style="font-family: 'Dancing Script'; font-size: 2.2rem; color: var(--secondary); margin: 0;">Aşk Tarlası</h2>
+            <p style="font-size: 0.7rem; color: var(--primary); margin-bottom: 15px; font-weight: bold;">6 Resim Bulursan Kazanırsın!</p>
+            <div class="game-grid" id="grid"></div>
+            <button class="game-btn" onclick="anaSayfayaDon()" style="background:#333; margin-top: 20px;">← Geri Dön</button>
+        </div>
+    </div>
+
+    <script>
+        const beraberlik = new Date(2025, 1, 9, 20, 45, 0); 
+        const hedef = new Date(2025, 11, 19, 18, 47, 0); 
+        let photoClicks = 0;
+
+        function openModal(t) { document.getElementById("modal-text").innerText = t; document.getElementById("custom-modal").style.display = "flex"; }
+        function oyunuAc() { document.getElementById("ana-icerik").classList.add("hidden"); document.getElementById("oyun-alani").classList.remove("hidden"); initGame(); }
+        function anaSayfayaDon() { document.getElementById("oyun-alani").classList.add("hidden"); document.getElementById("ana-icerik").classList.remove("hidden"); }
+
+        function triggerPhotoEgg() {
+            photoClicks++;
+            if(photoClicks >= 3) {
+                confetti({ particleCount: 100, spread: 60, colors: ['#ff4d6d', '#ffffff'], shapes: ['heart'] });
+                photoClicks = 0;
+            }
+        }
+
+        const titleEl = document.getElementById('long-press-title');
+        let pressTimer;
+        titleEl.addEventListener('touchstart', () => {
+            pressTimer = setTimeout(() => {
+                openModal("Gizli Not: Sen benim başıma gelen en güzel şeysin. Bu siteyi senin için, seni ne kadar çok sevdiğimi asla unutmaman için yaptım... 🌹");
+            }, 2000);
+        });
+        titleEl.addEventListener('touchend', () => clearTimeout(pressTimer));
+
+        /* YENİ EASTER EGG: EKRANA BASILI TUTUNCA KARARMA */
+        let worldTimer;
+        document.addEventListener('touchstart', (e) => {
+            // Sadece ana container üzerindeyken çalışması için
+            if(document.getElementById("main").style.display === "block") {
+                worldTimer = setTimeout(() => {
+                    document.body.style.filter = "brightness(0.1)";
+                    setTimeout(() => {
+                        openModal("Sen benim dünyamsın... ❤️");
+                        document.body.style.filter = "none";
+                    }, 1000);
+                }, 5000); // 5 saniye basılı tutma
+            }
+        });
+        document.addEventListener('touchend', () => clearTimeout(worldTimer));
+
+        function login() {
+            const pwInput = document.getElementById("pw");
+            const sifre = pwInput.value.toLowerCase().trim().replace(/\s/g, '').replace('ş', 's');
+            
+            if(sifre === "9subat") {
+                document.getElementById("login-screen").style.opacity = "0";
+                setTimeout(() => {
+                    document.getElementById("login-screen").style.display = "none";
+                    document.getElementById("main").style.display = "block";
+                    confetti(); setInterval(update, 1000); update(); startSnow();
+                }, 1000);
+            } else { 
+                openModal("Yanlış anahtar sevgilim! ❤️");
+                pwInput.value = ""; 
+            }
+        }
+
+        function update() {
+            const simdi = new Date();
+            const diffB = simdi - beraberlik;
+            document.getElementById("b-sayac").innerText = Math.floor(diffB/(1000*60*60*24)) + "g " + Math.floor((diffB/(1000*60*60))%24) + "s " + Math.floor((diffB/1000/60)%60) + "d " + Math.floor((diffB/1000)%60) + "s";
+            const diffY = hedef - simdi;
+            if(diffY <= 0) {
+                document.getElementById("y-alan").style.display = "none";
+                document.getElementById("surpriz-bolumu").style.display = "block";
+            } else {
+                document.getElementById("y-sayac").innerText = Math.floor(diffY/(1000*60*60*24)) + "g " + Math.floor((diffY/(1000*60*60))%24) + "s " + Math.floor((diffY/1000/60)%60) + "d " + Math.floor((diffY/1000)%60) + "s";
+            }
+        }
+
+        function initGame() {
+            const grid = document.getElementById("grid"); grid.innerHTML = "";
+            let opened = 0; let cells = [];
+            const askFoto = "data:image/png;base64,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"; 
+            const fotoHTML = `<img src="${askFoto}">`;
+            for(let i=0; i<14; i++) cells.push({type:'ok', val: fotoHTML});
+            for(let i=0; i<2; i++) cells.push({type:'bomb', val:'❌'});
+            cells.sort(() => Math.random() - 0.5);
+            cells.forEach(c => {
+                const div = document.createElement("div"); div.className = "cell"; div.innerText = "?";
+                div.onclick = () => {
+                    if(div.classList.contains('opened')) return;
+                    div.classList.add("opened"); div.innerHTML = c.val;
+                    if(c.type === 'bomb') { div.classList.add("fail"); setTimeout(() => { openModal("Bombaya bastın! ❤️"); initGame(); }, 300); }
+                    else { opened++; if(opened === 6) { confetti(); setTimeout(() => { openModal("Tebrikler kazandın! ❤️"); anaSayfayaDon(); }, 500); } }
+                };
+                grid.appendChild(div);
+            });
+        }
+
+        function startSnow() {
+            setInterval(() => {
+                const flake = document.createElement('div'); flake.className = 'snowflake'; flake.innerHTML = '❄';
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.animationDuration = Math.random() * 3 + 4 + 's';
+                document.body.appendChild(flake);
+                setTimeout(() => flake.remove(), 6000);
+            }, 400);
+        }
+    </script>
+</body>
+</html>
